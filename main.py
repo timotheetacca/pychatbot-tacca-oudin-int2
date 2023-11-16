@@ -393,6 +393,26 @@ def least_important_words(directory, matrix=None):
     return f"Here's the list of least important words : {least_important_words}"
 
 
+def highest_tf_idf_score(directory, matrix=None):
+    # Create and stores the matrix if the user didn't create one
+    if matrix is None:
+        matrix = tf_idf_matrix(directory)
+        print("New matrix created")
+  
+    max_score = 0.0
+    max_word=""
+    for row in matrix:
+        # Loop through the values in the row
+        for i in range(7):
+            # Check if the value is not None and greater than the current max
+            if row[1][i] is not None and row[1][i] > max_score:
+                max_score = row[1][i]
+                max_word = row[0]
+  
+    return f"The word with the highest TF-IDF score is '{max_word}' with a score of : {max_score:.4f}"
+
+
+
 # Call of the function extract_name()
 presidents = extract_president_names("speeches", "txt")
 for president in presidents:
@@ -434,4 +454,8 @@ print("")
 
 # Call of the function least_important_words()
 print(least_important_words("cleaned", matrix))
+print("")
+
+# Call of the function highest_tf_idf_score()
+print(highest_tf_idf_score("cleaned", matrix))
 print("")
