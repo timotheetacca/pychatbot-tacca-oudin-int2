@@ -35,6 +35,66 @@ def list_presidents_names(directory, extension):
     president_names = set(extract_president_names(directory, extension))
     return president_names
 
+  
+
+def convert_text_cleaned(filename):
+    """
+    Convert a text file to lowercase
+    
+    Parameters
+    ----------
+    filename (str): The name of the text 
+    
+    Returns
+    ----------
+    str: A message indicating the status of the operation
+    """
+    
+    # Check if the 'cleaned' directory exists; if not, create it
+    if not os.path.exists("cleaned"):
+        os.makedirs("cleaned")
+    
+    # Check if the input file exists
+    if not os.path.exists(os.path.join("speeches", filename)):
+        return f"There is no file named '{filename}' in speeches ⚠ "
+    
+    # Open the input file in read mode
+    input_filepath = os.path.join("speeches", filename)
+    with open(input_filepath, "r") as not_cleaned_file:
+        text = not_cleaned_file.read()
+    
+    cleaned_text = ""
+    for char in text:
+        # Check if the character is a capital letter or accented capital letter
+        if ord("A") <= ord(char) <= ord("Z") or ord("À") <= ord(char) <= ord("ß"):
+            cleaned_text += chr(ord(char) + 32)  # Convert uppercase letters to lowercase
+        else:
+            cleaned_text += char
+    
+    # Define the new filename for the cleaned file
+    name_parts = filename.split("_")
+    new_filename = f"{name_parts[0]}_{name_parts[1].split('.')[0]}_cleaned.txt"
+    new_filepath = os.path.join("cleaned", new_filename)
+    
+    # Write the cleaned text to the output file
+    with open(new_filepath, "w") as cleaned_file:
+        cleaned_file.write(cleaned_text)
+    
+    return f"File '{filename}' has been successfully converted to lowercase and saved in 'cleaned'."
+
+      
+
+def convert_folder_cleaned(directory):
+    # Check if their is documents in the 'speeches' directory
+    if not os.path.exists(directory):
+        return "You don't have any speeches ⚠ "
+      
+    # Read files from the 'speeches' folder
+    for filename in os.listdir(directory):
+        filepath = os.path.join(directory, filename)
+        convert_text_cleaned(filename)
+    return "'Speeches' as been successfully cleaned"
+
 
 
 # Call of the function extract_name()
@@ -51,4 +111,9 @@ print("")
 # Call of the function list_presidents_names()
 for name in (list_presidents_names("speeches", "txt")):
     print(name)
+print("")
+
+# Call of the function convert_text_cleaned()
+print(convert_text_cleaned("Nomination_Julien.txt"))
+print(convert_folder_cleaned("cleaned"))
 print("")
