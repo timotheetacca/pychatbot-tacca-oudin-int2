@@ -218,6 +218,54 @@ def remove_punctuation_folder(directory):
   return "'Cleaned' files no longer have accents"
 
 
+
+
+#TF-IDF PART
+
+
+
+
+
+def tf_score(filename):
+    """
+    Calculate the TF score for each word 
+    
+    Parameters
+    ----------
+    filename (str): The name of the cleaned text file.
+    
+    Returns
+    ----------
+    dict: A dictionary containing words as keys and their TF scores as values.
+    """
+    # Initialize an empty dictionary to store word counts
+    words_dictionary = {}
+    
+    # Create the file path to the cleaned text file
+    filepath = os.path.join("cleaned", filename)
+    
+    # Check if the file exists
+    if not os.path.isfile(filepath):
+        return f"No file named '{filename}' in 'cleaned' ⚠ "
+    
+    with open(filepath, "r") as tf_file:
+        # Read the file and split it into words
+        text = tf_file.read()
+        words = text.split()
+    
+        # Analyze each word in the text
+        for word in words:
+            # If the word is already in the dictionary add 1 to its count
+            if word in words_dictionary:
+                words_dictionary[word] += 1
+            else:
+                # If the word is not in the dictionary add it with a count of 1
+                words_dictionary[word] = 1
+    
+    return words_dictionary
+
+
+
 # Call of the function extract_name()
 presidents = extract_president_names("speeches", "txt")
 for president in presidents:
@@ -243,3 +291,7 @@ print("")
 print(remove_punctuation_text("Nomination_Timothée.txt"))
 print(remove_punctuation_folder("cleaned"))
 print("")
+
+# Call of the function tf_score()
+(tf_score("Nomination_Macron_removed_punctuation.txt"))
+print(tf_score("Nomination_Julien_removed_punctuation.txt"))
