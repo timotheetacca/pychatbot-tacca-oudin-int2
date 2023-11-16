@@ -354,6 +354,29 @@ def tf_idf_matrix(directory):
     
     return tf_idf_matrix
 
+def print_tf_idf_matrix(directory, matrix=None):
+    # Create and stores the matrix if the user didn't created one
+    if matrix==None:
+        matrix = tf_idf_matrix(directory)
+
+    # Print the matrix's header
+    print("|"," "*15," | Srkozy | Chrac2 | Mitrd1 | GscEsg | Mitrd2 | Chrac1 | Holnde | Macron |")
+
+    # Print the matrix rows
+    for row in matrix: #REMOVE [:30] FOR FULL MATRIX
+      word, values = row[0], row[1]
+      # Make the matrix look aligned when printed
+      while len(word) < 16:
+          word += " "
+      formatted_values = []
+  
+      for value in values:
+          if value is not None:
+              formatted_values.append(f"{value:.4f}")
+          else:
+              formatted_values.append("None  ")
+  
+      print(f"| {word} | {' | '.join(formatted_values)} |")
 
 # Call of the function extract_name()
 presidents = extract_president_names("speeches", "txt")
@@ -391,3 +414,5 @@ print("")
 
 # Call of the function tf_idf_matrix()
 matrix=tf_idf_matrix("cleaned")
+print_tf_idf_matrix("cleaned",matrix)
+print("")
