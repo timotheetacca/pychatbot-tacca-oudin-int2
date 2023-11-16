@@ -77,7 +77,7 @@ def convert_text_cleaned(filename):
     new_filepath = os.path.join("cleaned", new_filename)
     
     # Write the cleaned text to the output file
-    with open(new_filepath, "w") as cleaned_file:
+    with open(new_filepath, "w", encoding="utf-8") as cleaned_file:
         cleaned_file.write(cleaned_text)
     
     return f"File '{filename}' has been successfully converted to lowercase and saved in 'cleaned'."
@@ -314,7 +314,7 @@ def print_tf_idf_matrix(directory, matrix=None):
     print("|"," "*15," | Srkozy | Chrac2 | Mitrd1 | GscEsg | Mitrd2 | Chrac1 | Holnde | Macron |")
 
     # Print the matrix rows
-    for row in matrix: #REMOVE [:30] FOR FULL MATRIX
+    for row in matrix:
       word, values = row[0], row[1]
       # Make the matrix look aligned when printed
       while len(word) < 16:
