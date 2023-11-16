@@ -306,6 +306,54 @@ def idf_score(directory):
     
     return word_idf
 
+def tf_idf_matrix(directory):
+    """
+    Calculate the TF-IDF matrix
+    
+    Parameters
+    ----------
+    directory (str): The directory containing cleaned and punctuation-removed text files
+    
+    Returns
+    ----------
+    list: TF-IDF matrix represented as a list of lists.
+    """
+    # Get IDF score
+    idf_scores = idf_score(directory)
+    
+    # Initialize an empty TF-IDF matrix
+    tf_idf_matrix = []
+    
+    for filename in os.listdir(directory):
+        if filename.endswith("_removed_punctuation.txt"):
+            # Get the TF scores for the document
+            tf_scores = tf_score(filename)
+    
+            for key in idf_scores.keys():
+                found = False
+    
+                # Check if the word is already in the TF-IDF matrix
+                for i in range(len(tf_idf_matrix)):
+                    if tf_idf_matrix[i][0] == key:
+                        if key in tf_scores:
+                            # If the word is used in this text, add the TF-IDF score to the matrix
+                            tf_idf_matrix[i][1].append(idf_scores[key] * tf_scores[key])
+                        else:
+                            # Else, add "None" to indicate the word is not in this document
+                            tf_idf_matrix[i][1].append(None)
+                        found = True
+    
+                # If the word is not in the TF-IDF matrix, create a new row
+                if not found:
+                    if key in tf_scores:
+                        # If the word is used in this text, add the TF-IDF score to a new row
+                        tf_idf_matrix.append([key, [idf_scores[key] * tf_scores[key]]])
+                    else:
+                        # Else add "None" to indicate the word is not in this document
+                        tf_idf_matrix.append([key, [None]])
+    
+    return tf_idf_matrix
+
 
 # Call of the function extract_name()
 presidents = extract_president_names("speeches", "txt")
@@ -340,3 +388,6 @@ print(tf_score("Nomination_Julien_removed_punctuation.txt"))
 # Call of the function idf_score()
 (idf_score("cleaned"))
 print("")
+
+# Call of the function tf_idf_matrix()
+matrix=tf_idf_matrix("cleaned")
