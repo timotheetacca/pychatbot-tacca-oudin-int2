@@ -154,6 +154,56 @@ def convert_folder_cleaned(directory):
         convert_text_cleaned(filename)
     return "'Speeches' as been successfully cleaned"
 
+def remove_punctuation_text(filename):
+    """
+    Remove punctuation and accents from a text 
+  
+    Parameters
+    ----------
+    filename (str): The name of the text 
+  
+    Returns
+    ----------
+    str: A message indicating the status of the operation
+    """
+    # Check if the 'cleaned' directory exists
+    if not os.path.exists("cleaned"):
+        return "You don't have any cleaned text ⚠ "
+  
+    # Check if the input file exists
+    if not os.path.exists(os.path.join("cleaned", filename)):
+        return f"There is no file named '{filename}' in cleaned ⚠ "
+  
+    with open(os.path.join("cleaned", filename), "r", encoding="utf8") as not_removed_punctuation:
+        # Read the original text from the file
+        text = not_removed_punctuation.read()
+        cleaned_text = ""
+        spacing = " \n\t"
+        special_treatment = "'-_"
+        accents = {"à": "a", "è": "e", "ù": "u", "â": "a", "é": "e", "ê": "e", "î": "i", "ô": "o", "û": "u",
+                   "ë": "e", "ç": "c", "œ": "oe"}
+  
+        # Analyze each character in the text
+        for char in text:
+            if char in accents:
+                cleaned_text += accents.get(char, '*')  # Replace all accents with their non-accented versions
+            elif (ord("a") <= ord(char) <= ord("z")) or (char in spacing) or (ord('0') <= ord(char) <= ord('9')):
+                cleaned_text += char  # Keep lowercase letters, special characters, and numbers
+            elif char in special_treatment:
+                cleaned_text += " "  # Replace "'" and "-" with a space
+            else:
+                cleaned_text += ""  # Exclude all other characters
+  
+        # Define the new filename for the cleaned file
+        new_filename = filename.split("_")[0] + "_" + filename.split("_")[1] + "_removed_punctuation.txt"
+        new_filepath = os.path.join("cleaned", new_filename)
+  
+        # Write the cleaned text to a new file
+        with open(new_filepath, "w") as cleaned_file:
+            cleaned_file.write(cleaned_text)
+          
+    return f"File '{filename}' has been successfully processed to remove punctuation and saved in 'cleaned'"
+
 
 # Call of the function extract_name()
 presidents = extract_president_names("speeches", "txt")
@@ -174,4 +224,8 @@ print("")
 # Call of the function convert_text_cleaned()
 print(convert_text_cleaned("Nomination_Julien.txt"))
 print(convert_folder_cleaned("cleaned"))
+print("")
+
+# Call of the function remove_punctuation()
+print(remove_punctuation_text("Nomination_Timothée.txt"))
 print("")
