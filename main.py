@@ -378,6 +378,21 @@ def print_tf_idf_matrix(directory, matrix=None):
   
       print(f"| {word} | {' | '.join(formatted_values)} |")
 
+def least_important_words(directory, matrix=None):
+    # Create and stores the matrix if the user didn't created one
+    if matrix==None:
+        matrix = tf_idf_matrix(directory)
+        print("New matrix created")
+  
+    least_important_words=[]
+    for row in matrix:
+        # Stores the word if his TF-IDF = 0 in all files
+        if row[1]==[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]:
+            least_important_words.append(row[0])
+    
+    return f"Here's the list of least important words : {least_important_words}"
+
+
 # Call of the function extract_name()
 presidents = extract_president_names("speeches", "txt")
 for president in presidents:
@@ -415,4 +430,8 @@ print("")
 # Call of the function tf_idf_matrix()
 matrix=tf_idf_matrix("cleaned")
 print_tf_idf_matrix("cleaned",matrix)
+print("")
+
+# Call of the function least_important_words()
+print(least_important_words("cleaned", matrix))
 print("")
