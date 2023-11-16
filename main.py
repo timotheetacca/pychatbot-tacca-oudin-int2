@@ -174,7 +174,7 @@ def remove_punctuation_text(filename):
     if not os.path.exists(os.path.join("cleaned", filename)):
         return f"There is no file named '{filename}' in cleaned ⚠ "
   
-    with open(os.path.join("cleaned", filename), "r", encoding="utf8") as not_removed_punctuation:
+    with open(os.path.join("cleaned", filename), "r", encoding="utf-8") as not_removed_punctuation:
         # Read the original text from the file
         text = not_removed_punctuation.read()
         cleaned_text = ""
@@ -264,6 +264,47 @@ def tf_score(filename):
     
     return words_dictionary
 
+def idf_score(directory):
+    """
+    Calculate the IDF score for each word
+    
+    Parameters
+    ----------
+    directory (str): The directory containing cleaned and punctuation-removed text files
+    
+    Returns
+    ----------
+    dict: A dictionary containing words as keys and their IDF scores as values
+    """
+    # Initialize an empty dictionary to store word counts in documents
+    words_in_documents = {}
+    
+    # Count the number of documents and create a set of words in each document
+    file_count = 0
+    for filename in os.listdir(directory):
+        # Check if the file is a punctuation-removed text file
+        if filename.endswith("_removed_punctuation.txt"):
+            file_count += 1
+            filepath = os.path.join(directory, filename)
+            with open(filepath, 'r') as file:
+                text = file.read()
+                words = set(text.split())
+    
+                # Calculate in how many files the word appears
+                for word in words:
+                    if word in words_in_documents:
+                        # If the word is already in the dictionary, increment its count by 1 
+                        words_in_documents[word] += 1
+                    else:
+                        # If the word is not in the dictionary, add it
+                        words_in_documents[word] = 1
+    
+    # Calculate IDF for each word
+    word_idf = {}
+    for word, value in words_in_documents.items():
+        word_idf[word] = math.log(file_count / value)
+    
+    return word_idf
 
 
 # Call of the function extract_name()
@@ -295,3 +336,7 @@ print("")
 # Call of the function tf_score()
 (tf_score("Nomination_Macron_removed_punctuation.txt"))
 print(tf_score("Nomination_Julien_removed_punctuation.txt"))
+
+# Call of the function idf_score()
+(idf_score("cleaned"))
+print("")
