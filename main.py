@@ -205,6 +205,19 @@ def remove_punctuation_text(filename):
     return f"File '{filename}' has been successfully processed to remove punctuation and saved in 'cleaned'"
 
 
+          
+def remove_punctuation_folder(directory):
+  # Check if the 'cleaned' directory exists
+  if not os.path.exists(directory):
+      return "You don't have any cleaned text ⚠ "
+    
+  # Read files from the 'cleaned' folder
+  for filename in os.listdir(directory):
+      filepath = os.path.join(directory, filename)
+      remove_punctuation_text(filename)
+  return "'Cleaned' files no longer have accents"
+
+
 # Call of the function extract_name()
 presidents = extract_president_names("speeches", "txt")
 for president in presidents:
@@ -228,4 +241,5 @@ print("")
 
 # Call of the function remove_punctuation()
 print(remove_punctuation_text("Nomination_Timothée.txt"))
+print(remove_punctuation_folder("cleaned"))
 print("")
