@@ -24,8 +24,8 @@ def extract_president_names(directory, filename):
   else:
       found_file = ""
       for files in os.listdir(directory):
-          if filename in files and files.endswith(files.split(".")[-1]):
-              found_file = files
+            if filename == files and files.endswith(files.split(".")[-1]):
+                found_file = files
 
       if found_file != "":
           # Every file is named: "Nomination_{name}" so we split the file name using _ as space
@@ -147,7 +147,7 @@ def convert_text_cleaned(filename, directory, cleaned_directory):
 
     # Check if the input file exists
     if not os.path.exists(os.path.join(directory, filename)):
-        message= f"There is no file named '{filename}' in {directory} ⚠ "
+        message= f"There is no file named '{filename}' in '{directory}' ⚠ "
     else:
         # Open the input file in read mode
         input_filepath = os.path.join(directory, filename)
@@ -811,8 +811,10 @@ def first_president_to_mention(cleaned_directory, chosen_word, matrix=None):
 
 
 # Call of the function extract_name()
-print(extract_president_names("speeches","Nomination_Mitterand1_removed_punctuation.txt"))
+print(extract_president_names("speeches","Nomination_Mitterrand1.txt"))
+print(extract_president_names("speeches","Nomination_Timothée.txt"))
 print((extract_president_names_folder("speeches")))
+print((extract_president_names_folder("text")))
 print("")
 
 # Call of the function associate_name()
@@ -822,6 +824,7 @@ print("")
 
 # Call of the function list_presidents_names()
 print(list_presidents_names("speeches"))
+print(list_presidents_names("text"))
 print("")
 
 # Call of the function convert_text_cleaned()
@@ -866,7 +869,9 @@ print("")
 # Call of the function who_spoke_about()
 print(presidents_who_mentioned("speeches","cleaned", "nation"))
 print(presidents_who_mentioned("speeches","cleaned", "grande"))
+
 print(presidents_who_mentioned("speeches","cleaned", "tableau"))
+
 print("")
 
 
@@ -877,3 +882,4 @@ print(first_president_to_mention("cleaned","economie", matrix))
 print(first_president_to_mention("cleaned","president", matrix))
 print(first_president_to_mention("cleaned","voiture", matrix))
 print("")
+
