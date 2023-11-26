@@ -48,14 +48,6 @@ The following functions are related to TF-IDF (Term Frequency-Inverse Document F
  
 `print_tf_idf_matrix(cleaned_directory, matrix=None)` : Prints the TF-IDF matrix for the documents in a directory
 
->The matrix is displayed like this :
-|          |Sarkozy|Chirac2|Mitterand1|Giscard d'Estaing|Mitterand2|Chirac1|Hollande|Macron|
-| -------- |:-----:|:-----:|:--------:|:---------------:|:--------:|:-----:|:------:|:----:|
-| resoudre |0.6021 |       |          |                 |          |       |        |0.6021|
-| parce    |3.0618 |       |0.2041    |0.2041           |          |       |0.2041  |0.6124|
-| france   |0.0    |0.0    | 0.0      |0.0              |0.0       |0.0    |0.0     |0.0   |
-
-
 `least_important_words(cleaned_directory, matrix=None)` : Generates a list of words with the least importance, where their TF-IDF = 0 in all files
 
 `highest_tf_idf_score(cleaned_directory, matrix=None)` : Determine the word with the highest TF-IDF score
