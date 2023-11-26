@@ -1,419 +1,85 @@
-import os, math
-def extract_president_names(directory, extension):
-    files_presidents = []
+from pychatbot_functions import *
+running = True
 
-    for filename in os.listdir(directory):
-        if filename.endswith(extension):
+help_user = """
+If you want to see the first name of a president, enter '1'
+If you want to see the list of presidents, enter '2'
+If you want to see the TF-IDF matrix, enter '3'
+If you want to see the least important words, enter '4'
+If you want to see the most important word, enter '5'
+If you want to know the most repeated word by a president, enter '6'
+If you want to know the list of presidents who have mentioned a chosen word, enter '7'
+If you want to see who is the first president to mention a chosen word, enter '8'
+If you want to see the words mentioned by all presidents, enter '9'
+"""
 
-            # Every file is named : "Nomination_{name}" so we split the file name using _ as space
-            name_parts = filename.split("_") 
-            president_name = (name_parts[1])[:-4] 
+print("Welcome to our Python Chat Bot ! You can now test some functionalities. If you want to stop testing "
+      "enter 'stop'.\n")
 
-            # Remove the numbers at the end of the file name
-            numbers="0123456789"
-            while president_name[-1] in numbers:
-                president_name = president_name[:-1]
-            files_presidents.append(president_name)
-    return files_presidents
+# Get the directory and cleaned_directory from the use
+directory = str(input("Before you begin, please enter the name of the file where your texts are located : "))
+while not os.path.exists(directory):
+  print(f"You don't have any folder named '{directory}' ⚠ ")
+  directory = str(input("Before you begin, please enter the name of the file where your texts are located : "))
 
-
-
-def associate_name(name):
-    first_names = {"Chirac": "Jacques", "Giscard d'Estaing": "Valéry", "Mitterrand": "François", "Macron": "Emmanuel", "Sarkozy": "Nicolas"}
-    if name in first_names:
-        # If the name exists in the dictionary, return the first name and a message
-        return first_names[name]+" "+name+"'s first name is : "+first_names[name]
-    else:
-        # If the name doesn't exist in the dictionary, return an error message
-        return f"The name {name} doesn't exist in our data base ⚠ "
+cleaned_directory = str(input("Please enter a name of the folder where the files will be treated : "))
 
 
+# Clean the speeches and create a matrix
+convert_folder_cleaned(directory,cleaned_directory)
+remove_punctuation_folder(cleaned_directory)
+matrix=tf_idf_matrix(cleaned_directory)
+
+print("\nThe list of the functions you can test is the following :\n")
+print(help_user,"\n")
+
+while running == True:
+    user_input = str(input("Enter the number associated to the function. If you want the list of commands and their numbers type 'help' : "))
+    print()
+    if user_input == 'stop':
+        running = False
+    elif user_input == 'help':
+        print(help_user)
+
+    elif user_input == "1":
+        name_pres = str(input("Which president's last name do you want to know ? : "))
+        print(associate_name(name_pres), "\n")
+
+    elif user_input == "2":
+        print(list_presidents_names(directory), "\n")
+
+    elif user_input == "3":
+        print_tf_idf_matrix(cleaned_directory,matrix)
+        print("\n")
+
+    elif user_input == "4":
+        print(least_important_words(cleaned_directory,matrix), "\n")
+
+    elif user_input == "5":
+        print(highest_tf_idf_score(cleaned_directory, matrix), "\n")
+
+    elif user_input == "6":
+        president_name = str(input("Which president do you want to know about ? : "))
+        all_word = str(input("Type 'True' if you want to have all words included or 'False' if you want just important words : "))
+        # Makes sure the user enters the right value
+        while all_word not in ["True", "False"]:
+            all_word = str(input("Type 'True' if you want to have all words included or 'False' if you want just important words : "))
+
+        print(most_repeated_word_by_president(directory,president_name ,cleaned_directory, all_word, matrix), "\n")
+
+    elif user_input == "7":
+        chosen_word = str(input("What is the word you are looking for ? : "))
+        print(presidents_who_mentioned(directory, cleaned_directory, chosen_word), "\n")
+
+    elif user_input == "8":
+        word=str(input("What is the word you are looking for ? : "))
+        print(first_president_to_mention(cleaned_directory, word, matrix), "\n")
+
+    elif user_input == "9":
+        print(word_mentioned_by_all(directory, cleaned_directory, matrix), "\n")
+
+    elif user_input < "1" or user_input > "10" or user_input not in ["stop","help"]:
+        print("Invalid input ⚠")
 
 
-def list_presidents_names(directory, extension):
-    #Make a set of the extract_president_names() to avoid duplicates
-    president_names = set(extract_president_names(directory, extension))
-    return president_names
-
-  
-
-def convert_text_cleaned(filename):
-    """
-    Convert a text file to lowercase
-    
-    Parameters
-    ----------
-    filename (str): The name of the text 
-    
-    Returns
-    ----------
-    str: A message indicating the status of the operation
-    """
-    
-    # Check if the 'cleaned' directory exists; if not, create it
-    if not os.path.exists("cleaned"):
-        os.makedirs("cleaned")
-    
-    # Check if the input file exists
-    if not os.path.exists(os.path.join("speeches", filename)):
-        return f"There is no file named '{filename}' in speeches ⚠ "
-    
-    # Open the input file in read mode
-    input_filepath = os.path.join("speeches", filename)
-    with open(input_filepath, "r") as not_cleaned_file:
-        text = not_cleaned_file.read()
-    
-    cleaned_text = ""
-    for char in text:
-        # Check if the character is a capital letter or accented capital letter
-        if ord("A") <= ord(char) <= ord("Z") or ord("À") <= ord(char) <= ord("ß"):
-            cleaned_text += chr(ord(char) + 32)  # Convert uppercase letters to lowercase
-        else:
-            cleaned_text += char
-    
-    # Define the new filename for the cleaned file
-    name_parts = filename.split("_")
-    new_filename = f"{name_parts[0]}_{name_parts[1].split('.')[0]}_cleaned.txt"
-    new_filepath = os.path.join("cleaned", new_filename)
-    
-    # Write the cleaned text to the output file
-    with open(new_filepath, "w", encoding="utf-8") as cleaned_file:
-        cleaned_file.write(cleaned_text)
-    
-    return f"File '{filename}' has been successfully converted to lowercase and saved in 'cleaned'."
-
-      
-
-def convert_folder_cleaned(directory):
-    # Check if their is documents in the 'speeches' directory
-    if not os.path.exists(directory):
-        return "You don't have any speeches ⚠ "
-      
-    # Read files from the 'speeches' folder
-    for filename in os.listdir(directory):
-        filepath = os.path.join(directory, filename)
-        convert_text_cleaned(filename)
-    return "'Speeches' as been successfully cleaned"
-
-
-
-
-def remove_punctuation_text(filename):
-    """
-    Remove punctuation and accents from a text 
-  
-    Parameters
-    ----------
-    filename (str): The name of the text 
-  
-    Returns
-    ----------
-    str: A message indicating the status of the operation
-    """
-    # Check if the 'cleaned' directory exists
-    if not os.path.exists("cleaned"):
-        return "You don't have any cleaned text ⚠ "
-  
-    # Check if the input file exists
-    if not os.path.exists(os.path.join("cleaned", filename)):
-        return f"There is no file named '{filename}' in cleaned ⚠ "
-  
-    with open(os.path.join("cleaned", filename), "r", encoding="utf8") as not_removed_punctuation:
-        # Read the original text from the file
-        text = not_removed_punctuation.read()
-        cleaned_text = ""
-        spacing = " \n\t"
-        special_treatment = "'-_"
-        accents = {"à": "a", "è": "e", "ù": "u", "â": "a", "é": "e", "ê": "e", "î": "i", "ô": "o", "û": "u",
-                   "ë": "e", "ç": "c", "œ": "oe"}
-  
-        # Analyze each character in the text
-        for char in text:
-            if char in accents:
-                cleaned_text += accents.get(char, '*')  # Replace all accents with their non-accented versions
-            elif (ord("a") <= ord(char) <= ord("z")) or (char in spacing) or (ord('0') <= ord(char) <= ord('9')):
-                cleaned_text += char  # Keep lowercase letters, special characters, and numbers
-            elif char in special_treatment:
-                cleaned_text += " "  # Replace "'" and "-" with a space
-            else:
-                cleaned_text += ""  # Exclude all other characters
-  
-        # Define the new filename for the cleaned file
-        new_filename = filename.split("_")[0] + "_" + filename.split("_")[1] + "_removed_punctuation.txt"
-        new_filepath = os.path.join("cleaned", new_filename)
-  
-        # Write the cleaned text to a new file
-        with open(new_filepath, "w") as cleaned_file:
-            cleaned_file.write(cleaned_text)
-          
-    return f"File '{filename}' has been successfully processed to remove punctuation and saved in 'cleaned'"
-
-          
-
-def remove_punctuation_folder(directory):
-  # Check if the 'cleaned' directory exists
-  if not os.path.exists(directory):
-      return "You don't have any cleaned text ⚠ "
-    
-  # Read files from the 'cleaned' folder
-  for filename in os.listdir(directory):
-      filepath = os.path.join(directory, filename)
-      remove_punctuation_text(filename)
-  return "'Cleaned' files no longer have accents"
-
-
-
-
-
-
-#TF-IDF PART
-
-
-
-
-
-
-def tf_score(filename):
-    """
-    Calculate the TF score for each word 
-    
-    Parameters
-    ----------
-    filename (str): The name of the cleaned text file.
-    
-    Returns
-    ----------
-    dict: A dictionary containing words as keys and their TF scores as values.
-    """
-    # Initialize an empty dictionary to store word counts
-    words_dictionary = {}
-    
-    # Create the file path to the cleaned text file
-    filepath = os.path.join("cleaned", filename)
-    
-    # Check if the file exists
-    if not os.path.isfile(filepath):
-        return f"No file named '{filename}' in 'cleaned' ⚠ "
-    
-    with open(filepath, "r") as tf_file:
-        # Read the file and split it into words
-        text = tf_file.read()
-        words = text.split()
-    
-        # Analyze each word in the text
-        for word in words:
-            # If the word is already in the dictionary add 1 to its count
-            if word in words_dictionary:
-                words_dictionary[word] += 1
-            else:
-                # If the word is not in the dictionary add it with a count of 1
-                words_dictionary[word] = 1
-    
-    return words_dictionary
-    
-
-def idf_score(directory):
-    """
-    Calculate the IDF score for each word
-    
-    Parameters
-    ----------
-    directory (str): The directory containing cleaned and punctuation-removed text files
-    
-    Returns
-    ----------
-    dict: A dictionary containing words as keys and their IDF scores as values
-    """
-    # Initialize an empty dictionary to store word counts in documents
-    words_in_documents = {}
-    
-    # Count the number of documents and create a set of words in each document
-    file_count = 0
-    for filename in os.listdir(directory):
-        # Check if the file is a punctuation-removed text file
-        if filename.endswith("_removed_punctuation.txt"):
-            file_count += 1
-            filepath = os.path.join(directory, filename)
-            with open(filepath, 'r') as file:
-                text = file.read()
-                words = set(text.split())
-    
-                # Calculate in how many files the word appears
-                for word in words:
-                    if word in words_in_documents:
-                        # If the word is already in the dictionary, increment its count by 1 
-                        words_in_documents[word] += 1
-                    else:
-                        # If the word is not in the dictionary, add it
-                        words_in_documents[word] = 1
-    
-    # Calculate IDF for each word
-    word_idf = {}
-    for word, value in words_in_documents.items():
-        word_idf[word] = math.log(file_count / value)
-    
-    return word_idf
-
-
-
-def tf_idf_matrix(directory):
-    """
-    Calculate the TF-IDF matrix
-    
-    Parameters
-    ----------
-    directory (str): The directory containing cleaned and punctuation-removed text files
-    
-    Returns
-    ----------
-    list: TF-IDF matrix represented as a list of lists.
-    """
-    # Get IDF score
-    idf_scores = idf_score(directory)
-    
-    # Initialize an empty TF-IDF matrix
-    tf_idf_matrix = []
-    
-    for filename in os.listdir(directory):
-        if filename.endswith("_removed_punctuation.txt"):
-            # Get the TF scores for the document
-            tf_scores = tf_score(filename)
-    
-            for key in idf_scores.keys():
-                found = False
-    
-                # Check if the word is already in the TF-IDF matrix
-                for i in range(len(tf_idf_matrix)):
-                    if tf_idf_matrix[i][0] == key:
-                        if key in tf_scores:
-                            # If the word is used in this text, add the TF-IDF score to the matrix
-                            tf_idf_matrix[i][1].append(idf_scores[key] * tf_scores[key])
-                        else:
-                            # Else, add "None" to indicate the word is not in this document
-                            tf_idf_matrix[i][1].append(None)
-                        found = True
-    
-                # If the word is not in the TF-IDF matrix, create a new row
-                if not found:
-                    if key in tf_scores:
-                        # If the word is used in this text, add the TF-IDF score to a new row
-                        tf_idf_matrix.append([key, [idf_scores[key] * tf_scores[key]]])
-                    else:
-                        # Else add "None" to indicate the word is not in this document
-                        tf_idf_matrix.append([key, [None]])
-    
-    return tf_idf_matrix
-  
-
-def print_tf_idf_matrix(directory, matrix=None):
-    # Create and stores the matrix if the user didn't created one
-    if matrix==None:
-        matrix = tf_idf_matrix(directory)
-
-    # Print the matrix's header
-    print("|"," "*15," | Srkozy | Chrac2 | Mitrd1 | GscEsg | Mitrd2 | Chrac1 | Holnde | Macron |")
-
-    # Print the matrix rows
-    for row in matrix:
-      word, values = row[0], row[1]
-      # Make the matrix look aligned when printed
-      while len(word) < 16:
-          word += " "
-      formatted_values = []
-  
-      for value in values:
-          if value is not None:
-              if value <= 10:
-                  formatted_values.append(f"{value:.4f}")
-              else:
-                  formatted_values.append(f"{value:.3f}")
-          else:
-              formatted_values.append("      ")
-  
-      print(f"| {word} | {' | '.join(formatted_values)} |")
-    
-def least_important_words(directory, matrix=None):
-    # Create and stores the matrix if the user didn't created one
-    if matrix==None:
-        matrix = tf_idf_matrix(directory)
-        print("New matrix created")
-  
-    least_important_words=[]
-    for row in matrix:
-        # Stores the word if his TF-IDF = 0 in all files
-        if row[1]==[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]:
-            least_important_words.append(row[0])
-    
-    return f"Here's the list of least important words : {least_important_words}"
-
-
-
-def highest_tf_idf_score(directory, matrix=None):
-    # Create and stores the matrix if the user didn't create one
-    if matrix is None:
-        matrix = tf_idf_matrix(directory)
-        print("New matrix created")
-  
-    max_score = 0.0
-    max_word=""
-    for row in matrix:
-        # Loop through the values in the row
-        for i in range(7):
-            # Check if the value is not None and greater than the current max
-            if row[1][i] is not None and row[1][i] > max_score:
-                max_score = row[1][i]
-                max_word = row[0]
-  
-    return f"The word with the highest TF-IDF score is '{max_word}' with a score of : {max_score:.4f}"
-      
-  
-
-    
-# Call of the function extract_name()
-presidents = extract_president_names("speeches", "txt")
-for president in presidents:
-    print(president)
-print("")
-
-# Call of the function associate_name()
-print(associate_name("Chirac"))
-print(associate_name("Julien"))
-print("")
-
-# Call of the function list_presidents_names()
-for name in (list_presidents_names("speeches", "txt")):
-    print(name)
-print("")
-
-# Call of the function convert_text_cleaned()
-print(convert_text_cleaned("Nomination_Julien.txt"))
-print(convert_folder_cleaned("speeches"))
-print("")
-
-
-
-# Call of the function remove_punctuation()
-print(remove_punctuation_text("Nomination_Timothée.txt"))
-print(remove_punctuation_folder("cleaned"))
-print("")
-
-# Call of the function tf_score()
-(tf_score("Nomination_Macron_removed_punctuation.txt"))
-print(tf_score("Nomination_Julien_removed_punctuation.txt"))
-
-# Call of the function idf_score()
-(idf_score("cleaned"))
-print("")
-
-# Call of the function tf_idf_matrix()
-matrix=tf_idf_matrix("cleaned")
-print_tf_idf_matrix("cleaned",matrix)
-print("")
-
-# Call of the function least_important_words()
-print(least_important_words("cleaned", matrix))
-print("")
-
-# Call of the function highest_tf_idf_score()
-print(highest_tf_idf_score("cleaned", matrix))
-print("")
+print("Thanks for using our chat-bot !")
