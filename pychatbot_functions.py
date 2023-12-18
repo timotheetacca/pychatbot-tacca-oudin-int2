@@ -909,6 +909,7 @@ def question_tokenization(request, question_directory, question_cleaned_director
     remove_punctuation_folder(question_cleaned_directory)
     message = f" Your request has been successfully cleaned and processed to remove punctuation and saved in '{question_cleaned_directory}'"
     return message
+<<<<<<< HEAD
 
 
 
@@ -1307,3 +1308,5 @@ def check_for_directories():
   else:
       # If the file doesn't exist, call the change_directories function to set up directories
       return change_directories()
+=======
+>>>>>>> cc64da74536ee055405fa87c76933b33b7a13076
