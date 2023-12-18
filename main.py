@@ -161,6 +161,11 @@ if user_mode == "0":
   # Display the help menu
   print_help()
 
+  #Set default values for testing
+  cleaned_directory_idf= None
+  cleaned_directory_tf=None
+  matrix_user=None
+
   # Main loop for user interaction
   while running == True:
       # Request user input for selecting a function
