@@ -909,3 +909,194 @@ def question_tokenization(request, question_directory, question_cleaned_director
     remove_punctuation_folder(question_cleaned_directory)
     message = f" Your request has been successfully cleaned and processed to remove punctuation and saved in '{question_cleaned_directory}'"
     return message
+
+
+
+def words_in_the_question(question_cleaned_directory , matrix):
+    """
+    Clean a question asked by the user
+
+    Parameters
+    ----------
+    question_cleaned_directory (str): The directory containing cleaned questions
+    matrix (list): A matrix containing TF-IDF scores
+
+    Returns
+    ----------
+    list: A list of words in the specified line of the question
+    or
+    str: A message indicating an error
+    """
+    message = "Error, couldn't process ⚠ "
+    if not os.path.exists(question_cleaned_directory):
+        message = f"You don't have any cleaned text in '{question_cleaned_directory}' ⚠ "
+    else:
+        for filename in os.listdir(question_cleaned_directory):
+            # Check if the file is a punctuation-removed text file
+            if filename.endswith("_removed_punctuation.txt"):
+                filepath = os.path.join(question_cleaned_directory, filename)
+                with open(filepath, 'r',encoding="utf-8") as questions:
+                  words_list = questions.readline().split()
+                  message = words_list
+    return message
+
+
+def scalar_product(matrix_A, matrix_B, file_name_A, file_name_B, directory):
+    """
+    Calculates the scalar product of a document and the question
+
+    Parameters
+    ----------
+    matrix_A (list): A matrix A containing TF-IDF scores
+    matrix_B (list): A matrix B containing TF-IDF scores
+    file_name_A (str): The file name of B of the document B to analyze
+    file_name_B (str): The file name of A of the document B to analyze
+    directory (str): The directory containing texts
+
+    Returns
+    ----------
+    int: The scalar product of the 2 vectors
+    or
+    str: A message indicating an error
+    """
+    message = "Error, couldn't process ⚠ "
+
+    # Check if the specified directory exists
+    if not os.path.exists(directory):
+        message = f"You don't have any folder named '{directory}' ⚠ "
+    else:
+        # Extract president names from the specified directory
+        list_presidents = extract_president_names_folder(directory, True)
+
+        # Find the document number for the matrix A
+        document_number_A=None
+        Found=True
+        for i in range (len(list_presidents)):
+          if (file_name_A == list_presidents[i] or file_name_A== "log_question") and Found==True:
+              document_number_A=i
+              Found=False
+
+        # Find the document number for the matrix B
+        Found=True
+        document_number_B=None
+        for i in range (len(list_presidents)):
+          if (file_name_B == list_presidents[i] or file_name_B== "log_question") and Found==True:
+              document_number_B=i
+              Found=False
+
+        # Check if the president name was found
+        if document_number_A is None:
+            message = f"The name '{file_name_A}' doesn't exist in our database ⚠ "
+        if document_number_B is None:
+            message = f"The name '{file_name_B}' doesn't exist in our database ⚠ "
+
+        else:
+            scalar_product = 0
+
+            # Calculate the scalar product of a given document with the question
+            if (len(matrix_A)) == (len(matrix_B)) :
+                for i in range(len(matrix_A)):
+                    # Check for None values in matrix_A and matrix_B
+                    if matrix_B[i][1][document_number_B]== None or matrix_A[i][1][document_number_A] == None:
+                        scalar_product += 0.0  # If any value is None, add 0 to the scalar product
+                    else:
+                        # Multiply non-None values and add to the scalar product
+                        scalar_product += matrix_A[i][1][document_number_A] * matrix_B[i][1][document_number_B]
+
+                message = scalar_product
+
+    return message
+
+
+
+def norm_of_a_vector(matrix, file_name, directory):
+  """
+  Calculates the norm of a vector of a document
+
+  Parameters
+  ----------
+  matrix (list): A matrix containing TF-IDF scores
+  file_name (str): The name of the document to analyze
+  directory (str): The directory containing texts
+
+  Returns
+  ----------
+  int: The norm of the vector
+  or
+  str: A message indicating an error
+  """
+  message = "Error, couldn't process ⚠ "
+
+  # Check if the specified directory exists
+  if not os.path.exists(directory):
+      message = f"You don't have any folder named '{directory}' ⚠ "
+  else:
+      # Extract president names from the specified directory
+      list_presidents = extract_president_names_folder(directory, True)
+
+      # Find the document number for the given president name
+      Found=True
+      document_number=None
+      for i in range (len(list_presidents)):
+        if file_name == list_presidents[i] or file_name== "log_question" and Found==True:
+            document_number=i
+            Found=False
+
+      # Check if the president name was found
+      if document_number is None:
+          message = f"The name '{file_name}' doesn't exist in our database ⚠ "
+
+      else:
+          norm_of_a_vector = 0
+
+          # Calculate the norm of a given document
+          for i in range(len(matrix)):
+              # Check for None values in matrix
+              if matrix[i][1][document_number] is None:
+                  norm_of_a_vector += 0.0  # If any value is None, add 0 to the norm
+              else:
+                  # Multiply non-None values and square it
+                  norm_of_a_vector += matrix[i][1][document_number]**2
+
+          message = math.sqrt(norm_of_a_vector)
+
+  return message
+
+
+def similarity(matrix_A, matrix_B, file_name_A, file_name_B, directory):
+  """
+  Calculates the similarity of vectors of a document
+
+  Parameters
+  ----------
+  matrix_A (list): A matrix A containing TF-IDF scores
+  matrix_B (list): A matrix B containing TF-IDF scores
+  file_name_A (str): The file name of B of the document B to analyze
+  file_name_B (str): The file name of A of the document B to analyze
+  directory (str): The directory containing texts
+
+  Returns
+  ----------
+  int: The similarity between 2 vectors
+  or
+  str: A message indicating an error
+  """
+  message = "Error, couldn't process ⚠ "
+  # Check if the specified directory exists
+  if not os.path.exists(directory):
+      message = f"You don't have any folder named '{directory}' ⚠ "
+  else:
+
+      # Calculate the scalar product of the document vectors
+      scalar_product_value = scalar_product(matrix_A, matrix_B, file_name_A, file_name_B, directory)
+
+      # Calculate the product of the norms of the document vectors
+      norm_product = norm_of_a_vector(matrix_A, file_name_A, directory) * norm_of_a_vector(matrix_B, file_name_B, directory)
+
+      # Avoid division by zero and calculate the similarity
+      if norm_product != 0:
+          message = scalar_product_value / norm_product
+      else:
+          message=0
+
+  return message
