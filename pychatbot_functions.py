@@ -1,6 +1,25 @@
 import os, math
 
-def extract_president_names(directory, filename):
+def file_count(directory,extension=""):
+    """
+    Count the number of file with a given extension or not
+
+    Parameters
+    ----------
+    directory (str): The directory containing cleaned text files
+    extension (str): The file name extension
+
+    Returns
+    ----------
+    int: The number of file in the given directory
+    """
+    file_count = 0
+    for filename in os.listdir(directory):
+        if filename.endswith(extension):
+              file_count += 1
+    return file_count
+
+def extract_president_names(directory, filename, Full_name=False):
   """
   Extracts president names from text files in a directory
 
@@ -8,6 +27,7 @@ def extract_president_names(directory, filename):
   ----------
   directory (str): The directory containing text files
   filename (str): The specific filename to search for in the directory
+  Full_name (bool): Remove or not the numbers at the ends of a filename
 
   Returns
   ----------
@@ -33,9 +53,10 @@ def extract_president_names(directory, filename):
           president_name = ((name_parts[1]).split("."))[0]
 
           # Remove the numbers at the end of the file name
-          numbers = "0123456789"
-          while president_name[-1] in numbers:
-              president_name = president_name[:-1]
+          if Full_name == False:
+              numbers = "0123456789"
+              while president_name[-1] in numbers:
+                  president_name = president_name[:-1]
 
           message = president_name
       else:
@@ -43,13 +64,14 @@ def extract_president_names(directory, filename):
   return message
 
 
-def extract_president_names_folder(directory):
+def extract_president_names_folder(directory, Full_name=False):
     """
     Extracts president names from text files in a directory
 
     Parameters
     ----------
     directory (str): The directory containing text files
+    Full_name (bool): Remove or not the numbers at the ends of a filename
 
     Returns
     ----------
@@ -67,11 +89,8 @@ def extract_president_names_folder(directory):
         files_presidents = []
         for filename in os.listdir(directory):
             if filename.endswith(filename.split(".")[-1]):
-                files_presidents.append(extract_president_names(directory, filename))
-
-        if files_presidents!=[]:
-            files_presidents = ", ".join(files_presidents)
-            message = files_presidents
+                files_presidents.append(extract_president_names(directory, filename, Full_name))
+        message = files_presidents
     return message
 
 
@@ -120,9 +139,8 @@ def list_presidents_names(directory):
     if not os.path.exists(directory):
         message = f"You don't have any folder named '{directory}' ⚠ "
     else:
-      #Make a set of the extract_president_names() to avoid duplicates and then print a list of name separeted by comas
-      president_names = ", ".join(set((extract_president_names_folder(directory).split(", "))))
-      message= f"Here's the list of president (without duplicates) available in our data base : {president_names}"
+      # Make a set of the extract_president_names() to avoid duplicates and then print a list of name separeted by comas
+      message = list(set((extract_president_names_folder(directory))))
     return message
 
 
@@ -140,7 +158,7 @@ def convert_text_cleaned(filename, directory, cleaned_directory):
     ----------
     str: A message indicating the status of the operation
     """
-
+    message= "Error, couldn't process ⚠ "
     # Check if the 'cleaned' directory exists; if not, create it
     if not os.path.exists(cleaned_directory):
         os.makedirs(cleaned_directory)
@@ -163,8 +181,8 @@ def convert_text_cleaned(filename, directory, cleaned_directory):
                 cleaned_text += char
 
         # Define the new filename for the cleaned file
-        name_parts = filename.split("_")
-        new_filename = f"{name_parts[0]}_{name_parts[1].split('.')[0]}_cleaned.txt"
+        name_parts = filename.split(".txt")
+        new_filename = f"{name_parts[0]}_cleaned.txt"
         new_filepath = os.path.join(cleaned_directory, new_filename)
 
         # Write the cleaned text to the output file
@@ -200,7 +218,6 @@ def convert_folder_cleaned(directory, cleaned_directory):
           convert_text_cleaned(filename, directory,cleaned_directory)
           message= f"'{directory}' as been successfully cleaned"
     return message
-
 
 
 
@@ -283,17 +300,6 @@ def remove_punctuation_folder(cleaned_directory):
     return message
 
 
-
-
-
-
-#TF-IDF PART
-
-
-
-
-
-
 def tf_score(filename, cleaned_directory):
     """
     Calculate the TF score for each word 
@@ -361,11 +367,10 @@ def idf_score(cleaned_directory):
         words_in_documents = {}
 
         # Count the number of documents and create a set of words in each document
-        file_count = 0
+        number_of_files= file_count(cleaned_directory,"_removed_punctuation.txt")
         for filename in os.listdir(cleaned_directory):
             # Check if the file is a punctuation-removed text file
             if filename.endswith("_removed_punctuation.txt"):
-                file_count += 1
                 filepath = os.path.join(cleaned_directory, filename)
                 with open(filepath, 'r') as file:
                     text = file.read()
@@ -383,73 +388,76 @@ def idf_score(cleaned_directory):
         # Calculate IDF for each word
         word_idf = {}
         for word, value in words_in_documents.items():
-            word_idf[word] = math.log(file_count / value)
+            word_idf[word] = math.log10(number_of_files / value)
         message= word_idf
     return message
 
+def tf_idf_matrix(cleaned_directory_idf, cleaned_directory_tf):
+  """
+  Calculate the TF-IDF matrix
+
+  Parameters
+  ----------
+  cleaned_directory_idf (str): The directory containing cleaned text files for the IDF
+  cleaned_directory_tf (str): The directory containing cleaned text files for the TF
+
+  Returns
+  ----------
+  list: TF-IDF matrix represented as a list of lists.
+  or
+  str: A message indicating an error
+  """
+  message = "Error, couldn't process ⚠ "
+  if not os.path.exists(cleaned_directory_idf):
+      message = f"You don't have any folder named '{cleaned_directory_idf}' ⚠ "
+  elif not os.path.exists(cleaned_directory_tf):
+      message = f"You don't have any folder named '{cleaned_directory_tf}' ⚠ "
+
+  else:
+      # Get IDF score
+      idf_scores = idf_score(cleaned_directory_idf)
+
+      # Initialize an empty TF-IDF matrix
+      tf_idf_matrix = []
+      for filename in os.listdir(cleaned_directory_tf):
+          if filename.endswith("_removed_punctuation.txt"):
+              # Get the TF scores for the document
+              tf_scores = tf_score(filename, cleaned_directory_tf)
+
+              for key in idf_scores.keys():
+                  found = False
+
+                  # Check if the word is already in the TF-IDF matrix
+                  for i in range(len(tf_idf_matrix)):
+                      if tf_idf_matrix[i][0] == key:
+                          if key in tf_scores:
+                              # If the word is used in this text, add the TF-IDF score to the matrix
+                              tf_idf_matrix[i][1].append(idf_scores[key] * tf_scores[key])
+                          else:
+                              # Else, add "None" to indicate the word is not in this document
+                              tf_idf_matrix[i][1].append(None)
+                          found = True
+
+                  # If the word is not in the TF-IDF matrix, create a new row
+                  if not found:
+                      if key in tf_scores:
+                          # If the word is used in this text, add the TF-IDF score to a new row
+                          tf_idf_matrix.append([key, [idf_scores[key] * tf_scores[key]]])
+                      else:
+                          # Else add "None" to indicate the word is not in this document
+                          tf_idf_matrix.append([key, [None]])
+      message = tf_idf_matrix   
+  return message
 
 
-def tf_idf_matrix(cleaned_directory):
-    """
-    Calculate the TF-IDF matrix
-
-    Parameters
-    ----------
-    clean_directory (str): The directory containing cleaned text files
-
-    Returns
-    ----------
-    list: TF-IDF matrix represented as a list of lists.
-    or
-    str: A message indicating an error
-    """
-    message = "Error, couldn't process ⚠ "
-    if not os.path.exists(cleaned_directory):
-        message = f"You don't have any folder named '{cleaned_directory}' ⚠ "
-    else:
-        # Get IDF score
-        idf_scores = idf_score(cleaned_directory)
-
-        # Initialize an empty TF-IDF matrix
-        tf_idf_matrix = []
-        for filename in os.listdir(cleaned_directory):
-            if filename.endswith("_removed_punctuation.txt"):
-                # Get the TF scores for the document
-                tf_scores = tf_score(filename, cleaned_directory)
-
-                for key in idf_scores.keys():
-                    found = False
-
-                    # Check if the word is already in the TF-IDF matrix
-                    for i in range(len(tf_idf_matrix)):
-                        if tf_idf_matrix[i][0] == key:
-                            if key in tf_scores:
-                                # If the word is used in this text, add the TF-IDF score to the matrix
-                                tf_idf_matrix[i][1].append(idf_scores[key] * tf_scores[key])
-                            else:
-                                # Else, add "None" to indicate the word is not in this document
-                                tf_idf_matrix[i][1].append(None)
-                            found = True
-
-                    # If the word is not in the TF-IDF matrix, create a new row
-                    if not found:
-                        if key in tf_scores:
-                            # If the word is used in this text, add the TF-IDF score to a new row
-                            tf_idf_matrix.append([key, [idf_scores[key] * tf_scores[key]]])
-                        else:
-                            # Else add "None" to indicate the word is not in this document
-                            tf_idf_matrix.append([key, [None]])
-        message = tf_idf_matrix   
-    return message
-
-
-def print_tf_idf_matrix(cleaned_directory, matrix=None):
+def print_tf_idf_matrix(cleaned_directory_idf, cleaned_directory_tf, matrix):
     """
     Prints the TF-IDF matrix for the documents in a directory
 
     Parameters
     ----------
-    clean_directory (str): The directory containing cleaned text files
+    clean_directory_idf (str): The directory containing cleaned text files for the IDF
+    clean_directory_tf (str): The directory containing cleaned text files for the TF
     matrix (list): The TF-IDF matrix. If not provided, the function will generate it.
 
     Returns
@@ -460,17 +468,15 @@ def print_tf_idf_matrix(cleaned_directory, matrix=None):
     """
     message = "Error, couldn't process ⚠ "
     # Check if the 'cleaned' directory exists
-    if not os.path.exists(cleaned_directory):
-        message = f"You don't have any folder named '{cleaned_directory}' ⚠ "
+    if not os.path.exists(cleaned_directory_idf):
+      message = f"You don't have any folder named '{cleaned_directory_idf}' ⚠ "
+    elif not os.path.exists(cleaned_directory_tf):
+      message = f"You don't have any folder named '{cleaned_directory_tf}' ⚠ "
 
     else:
-        # Create and store the matrix if the user didn't provide one
-        if matrix is None:
-            matrix = tf_idf_matrix(cleaned_directory)
-
         # Get the list of filenames from the directory
         filenames = []
-        for filename in os.listdir(cleaned_directory):
+        for filename in os.listdir(cleaned_directory_tf):
             if filename.endswith("_removed_punctuation.txt"):
                 filenames.append(filename.split('_')[1].split('.')[0])
 
@@ -478,21 +484,21 @@ def print_tf_idf_matrix(cleaned_directory, matrix=None):
         max_word_length = max(len(row[0]) for row in matrix)
 
         # Generate the header 
-        header = [f"| {' ':<{max_word_length}}"]
+        header = [f"│ {' ':<{max_word_length}}"]
         for filename in filenames:
             header.append(f"{filename:^{max_word_length}}")  # Center each filename in a cell of width max_word_length
-        print(" | ".join(header) + " |")
+        print(" │ ".join(header) + " │")
 
         # Print the matrix rows
-        for row in matrix[:30]:
+        for row in matrix:
             word = row[0]
             values = row[1]
             word_padding = ' ' * (max_word_length - len(word))  # Calculate padding for the word
-            word_output = f"| {word}{word_padding} |"
-
+            word_output = f"│ {word}{word_padding} │"
             formatted_values = []
             for value in values:
                 if value is not None:
+                    # Cut the number so it fit in the matrix
                     if value <= 10:
                         formatted_values.append(f"{value:.4f}")
                     else:
@@ -500,8 +506,8 @@ def print_tf_idf_matrix(cleaned_directory, matrix=None):
                 else:
                     formatted_values.append(" ")
 
-            values_output = ' | '.join(f"{val:<{max_word_length}}" for val in formatted_values)
-            row_output = f"{word_output} {values_output} |"
+            values_output = ' │ '.join(f"{val:<{max_word_length}}" for val in formatted_values)
+            row_output = f"{word_output} {values_output} │"
             print(row_output)
             message = ""
 
@@ -509,7 +515,7 @@ def print_tf_idf_matrix(cleaned_directory, matrix=None):
 
 
 
-def least_important_words(cleaned_directory, matrix=None):
+def least_important_words(cleaned_directory, matrix):
     """
     Generates a list of words with the least importance, where their TF-IDF = 0 in all files
 
@@ -528,31 +534,23 @@ def least_important_words(cleaned_directory, matrix=None):
     if not os.path.exists(cleaned_directory):
         message = f"You don't have any folder named '{cleaned_directory}' ⚠ "
     else:
-        # Create and store the matrix if the user didn't create one
-        if matrix==None:
-            matrix = tf_idf_matrix(cleaned_directory)
-            print("New matrix created")
-
         # Count the number of files
-        file_count = 0
-        for filename in os.listdir(cleaned_directory):
-            if filename.endswith("_removed_punctuation.txt"):
-                  file_count += 1
+        number_of_files=file_count(cleaned_directory,"_removed_punctuation.txt")
 
         least_important_words = []
         for row in matrix:
             # Stores the word if its TF-IDF = 0 in all files
-            if row[1] == [0.0] * file_count: 
+            if row[1] == [0.0] * number_of_files: 
                 least_important_words.append(row[0])
 
         least_important_words = ", ".join(least_important_words)
-        message= f"Here's the list of least important words: {least_important_words}"
+        message= least_important_words
     return message
 
 
 
 
-def highest_tf_idf_score(cleaned_directory, matrix=None):
+def highest_tf_idf_score(cleaned_directory, matrix):
     """
     Determine the word with the highest TF-IDF score
 
@@ -574,31 +572,28 @@ def highest_tf_idf_score(cleaned_directory, matrix=None):
 
         # Create and store the matrix if the user didn't create one
         if matrix == None:
-            matrix = tf_idf_matrix(cleaned_directory)
+            matrix = tf_idf_matrix(cleaned_directory,cleaned_directory)
             print("New matrix created")
 
         # Count the number of files
-        file_count = 0
-        for filename in os.listdir(cleaned_directory):
-            if filename.endswith("_removed_punctuation.txt"):
-                  file_count += 1
+        number_of_files=file_count(cleaned_directory,"_removed_punctuation.txt")
 
         max_score = 0.0
         max_word = ""
         for row in matrix:
-            for i in range(file_count): 
+            for i in range(number_of_files): 
                 # Check if the value is not None and greater than the current max
                 if row[1][i] is not None and row[1][i] > max_score:
                     max_score = row[1][i]
                     max_word = row[0]
 
-        message= f"The word with the highest TF-IDF score is '{max_word}' with a score of: {max_score:.4f}"
+        message= [max_word,max_score]
     return message
 
 
 
 
-def most_repeated_word_by_president(directory, president_name, cleaned_directory ,least_important_included="False", matrix=None):
+def most_repeated_word_by_president(directory, president_name, cleaned_directory ,matrix, least_important_included=True):
     """
     Determine what's the most repeated word among the important ones
 
@@ -607,7 +602,7 @@ def most_repeated_word_by_president(directory, president_name, cleaned_directory
     directory (str):  The directory containing text files
     president_name (str): The name of the president to analyze
     cleaned_directory (str): The directory containing cleaned text files
-    least_important_included (str): Display a word that doesn't appear in the least_important_word()
+    least_important_included (bool): Display a word that doesn't appear in the least_important_word()
     matrix (list): A matrix containing TF-IDF scores
 
     Returns
@@ -622,10 +617,6 @@ def most_repeated_word_by_president(directory, president_name, cleaned_directory
     if not os.path.exists(directory):
       message = f"You don't have any folder named '{directory}' ⚠ "
     else:
-      if matrix==None:
-          matrix = tf_idf_matrix(cleaned_directory)
-          print("New matrix created")
-
       # Check if the president_name is in the list of presidents
       if president_name in list_presidents_names(directory):
           total_tf_score = {}
@@ -643,10 +634,10 @@ def most_repeated_word_by_president(directory, president_name, cleaned_directory
 
           # Find the most repeated word in the combined TF scores
           most_repeated_word = max(total_tf_score, key=total_tf_score.get)
-          # Check if the most repeated word is among the least important words 
+          # Check if the most repeated word is among the least important words
           if total_tf_score == {}:
               message = f"No significant word found for {president_name}."
-          if least_important_included=="True":
+          if least_important_included==False:
               while most_repeated_word in least_important_words(cleaned_directory, matrix):
                   # Remove the most repeated word from the total_tf_score dictionary
                   del total_tf_score[most_repeated_word]
@@ -655,13 +646,15 @@ def most_repeated_word_by_president(directory, president_name, cleaned_directory
 
 
           frequency = total_tf_score[most_repeated_word]
-          message= f"The most repeated word by {president_name} is '{most_repeated_word}', he repeated it {frequency} times."
+          if least_important_included==True:
+              message= f"The most repeated word among all words by {president_name} is '{most_repeated_word}', he repeated it {frequency} times."
+          else:
+              message= f"The most repeated among the important words by {president_name} is '{most_repeated_word}', he repeated it {frequency} times."
       else:
           # If the president_name is not in the list, return an error message
           message= f"The name '{president_name}' doesn't exist in our database ⚠ "
 
     return message
-
 
 
 
@@ -716,7 +709,7 @@ def presidents_who_mentioned (directory, cleaned_directory, chosen_word):
 
 
 
-def first_president_to_mention(cleaned_directory, chosen_word, matrix=None):
+def first_president_to_mention(cleaned_directory, chosen_word, matrix, theme_or_word=False):
     """
     Determine the first president to mention specific word(s)
 
@@ -725,6 +718,7 @@ def first_president_to_mention(cleaned_directory, chosen_word, matrix=None):
     cleaned_directory (str): The directory containing cleaned text files
     chosen_word (str): The word(s) to search for
     matrix (list): A matrix containing TF-IDF scores
+    theme_or_word (bool): Determine if the user want to search for a specific word or a theme
 
     Returns
     ----------
@@ -743,13 +737,25 @@ def first_president_to_mention(cleaned_directory, chosen_word, matrix=None):
 
       mention_indices = []
       words=[]
-      number_of_letters_removed=0
-      while (len(chosen_word))- number_of_letters_removed > 5:
-          number_of_letters_removed+=1
+      number_of_letters_removed=len(chosen_word)
+      result=""
+      # Convert to lowercase 
+      for char in chosen_word:
+        if 'A' <= char <= 'Z':
+            result += chr(ord(char) + ord('a') - ord('A'))
+        else:
+            result += char
+      chosen_word=result
+
+      #Determine the answer depending on the user preference
+      theme_or_word_answer='word'
+      if theme_or_word==True:
+        number_of_letters_removed=5
+        theme_or_word_answer='theme'
 
       for row in matrix:
         # Check if the row's word is equal to the chosen word
-        if chosen_word[:-number_of_letters_removed] in row[0]:
+        if chosen_word[:number_of_letters_removed] in row[0]:
             # Analyze the matrix elements, if it's not None, it appends its index to the mention_indices list
             for i in range(len(row[1])):
                 # Check if the element is not None, and append its index to the mention_indices list
@@ -760,7 +766,7 @@ def first_president_to_mention(cleaned_directory, chosen_word, matrix=None):
 
       # Check if the word already have been 
       if mention_indices==[]:
-          message= f"'{chosen_word}' hasn't been mentioned by any president available in our database ⚠ "
+          message= f"The {theme_or_word_answer} '{chosen_word}' hasn't been mentioned by any president available in our database ⚠ "
       else:
           filenames_who_mentioned = []
           filenames = []
@@ -801,11 +807,12 @@ def first_president_to_mention(cleaned_directory, chosen_word, matrix=None):
               president_name = president_name[:-1]
 
           filtered_words=", ".join(filtered_words)
-          message= f"The first president to talk about '{chosen_word}' was {president_name.split('_')[1]} in {nomination_year}. He used the words: {filtered_words}"
+          message= f"The first president to talk about the {theme_or_word_answer} '{chosen_word}' was {president_name.split('_')[1]} in {nomination_year}. He used the words: {filtered_words}"
     return message
 
 
-def word_mentioned_by_all(directory, cleaned_directory, matrix=None):
+
+def word_mentioned_by_all(directory, cleaned_directory, matrix):
     """
     Determine which word has been mentioned by all president among the important ones
 
@@ -830,10 +837,6 @@ def word_mentioned_by_all(directory, cleaned_directory, matrix=None):
     elif not os.path.exists(directory):
         message = f"You don't have any folder named '{directory}' ⚠ "
     else:
-        # If the matrix is not provided, create a new one
-        if matrix is None:
-            matrix = tf_idf_matrix(cleaned_directory)
-            print("New matrix created")
 
         # Get the list of filenames from the directory
         filenames = []
@@ -844,13 +847,13 @@ def word_mentioned_by_all(directory, cleaned_directory, matrix=None):
                 filenames.append(extract_president_names(directory, original_name))
 
         # Extract the list of presidents
-        presidents = sorted(list_presidents_names(directory).split(": ")[1].split(", "))
+        presidents = sorted(list_presidents_names(directory))
 
         mentioned_words = []
         for row in matrix:
             files_mentioned = []
             for i in range(len(row[1])):
-                if row[1][i] != None and row[0] not in least_important_words(cleaned_directory, matrix).split(": ")[1].split(", "):
+                if row[1][i] != None and row[0] not in least_important_words(cleaned_directory, matrix):
                     # Store the name of the presidents that mention this word
                     files_mentioned.append(filenames[i])
 
@@ -861,5 +864,48 @@ def word_mentioned_by_all(directory, cleaned_directory, matrix=None):
                 mentioned_words.append(row[0])
 
         mentioned_words=", ".join(mentioned_words)
-        message = f" Here's the list words mentioned by all president among the so-called 'important' words : {mentioned_words}" 
+        message = f"Here's the list words mentioned by all president among the so-called 'important' words : {mentioned_words}" 
+    return message
+
+
+def list_files(directory,extension=""):
+  list_of_files=[]
+  for filename in os.listdir(directory):
+      if filename.endswith(extension):
+          list_of_files.append(filename)
+  return list_of_files
+
+
+
+def question_tokenization(request, question_directory, question_cleaned_directory):
+    """
+    Clean a question asked by the user
+
+    Parameters
+    ----------
+    request (str): The quetion asked by the user
+    question_directory (str): The directory containing question 
+    question_cleaned_directory (str): The directory containing cleaned question 
+
+    Returns
+    ----------
+    str: A message indicating the status of the operation
+    """
+    message= "Error, couldn't process ⚠ "
+    # Check if the 'question_directory' directory exists; if not, create it
+    if not os.path.exists(question_directory):
+        os.makedirs(question_directory)
+    # Check if the 'question_cleaned_directory' directory exists; if not, create it
+    if not os.path.exists(question_cleaned_directory):
+        os.makedirs(question_cleaned_directory)
+
+    # Create a new .txt file in the question folder as log
+    new_filepath = os.path.join(question_directory, "log_question.txt")
+    with open(new_filepath, "a", encoding="utf-8") as log_question:
+      log_question.write(request+"\n")
+
+    # Clean the request of the user
+    convert_folder_cleaned(question_directory,question_cleaned_directory)
+    remove_punctuation_folder(question_cleaned_directory)
+    message = f" Your request has been successfully cleaned and processed to remove punctuation and saved in '{question_cleaned_directory}'"
     return message
