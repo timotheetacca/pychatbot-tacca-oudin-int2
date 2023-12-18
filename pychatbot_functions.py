@@ -1003,7 +1003,7 @@ def scalar_product(matrix_A, matrix_B, file_name_A, file_name_B, directory):
                         # Multiply non-None values and add to the scalar product
                         scalar_product += matrix_A[i][1][document_number_A] * matrix_B[i][1][document_number_B]
 
-                message = scalar_product
+                message = scalar_product  
 
     return message
 
@@ -1049,7 +1049,7 @@ def norm_of_a_vector(matrix, file_name, directory):
       else:
           norm_of_a_vector = 0
 
-          # Calculate the norm of a given document
+          # Calculate the norm of a given document 
           for i in range(len(matrix)):
               # Check for None values in matrix
               if matrix[i][1][document_number] is None:
@@ -1100,3 +1100,91 @@ def similarity(matrix_A, matrix_B, file_name_A, file_name_B, directory):
           message=0
 
   return message
+
+def calculating_most_relevant_document(matrix_A, matrix_B, directory):
+    """
+    Calculates the norm of a vector of a document
+
+    Parameters
+    ----------
+    matrix_A (list): A matrix A containing TF-IDF scores
+    matrix_B (list): A matrix B containing TF-IDF scores
+    directory (str): The directory containing texts
+
+    Returns
+    ----------
+    str: The name of the most relevant document
+    or
+    str: A message indicating an error
+    """
+    message = "Error, couldn't process ⚠ "
+    # Check if the specified directory exists
+    if not os.path.exists(directory):
+        message = f"You don't have any folder named '{directory}' ⚠ "
+    else:
+        list_documents_similarity=[]
+        for filename in os.listdir(directory):
+            # Extract the president name from the file
+            president_name=extract_president_names(directory, filename, True)
+            # Calculate the similarity and appends the filename and the similarity number
+            list_documents_similarity.append([filename, similarity(matrix_A, matrix_B, president_name, "log_question", directory)])
+            max=list_documents_similarity[0]
+
+            #Get the highest similarity number among all the documents
+            for i in range (len(list_documents_similarity)):
+                if max[1] < list_documents_similarity[i][1]:
+                    max=list_documents_similarity[i]
+
+            message = max[0]
+    return message
+
+
+def generate_an_answer(matrix_A, matrix_B, directory, cleaned_question_directory):
+    """
+    Generates an answer based on TF-IDF similarity between the question and documents.
+
+    Parameters
+    ----------
+    matrix_A (list): TF-IDF matrix of documents.
+    matrix_B (list): TF-IDF matrix of the question.
+    directory (str): Directory containing text documents.
+    cleaned_question_directory (str): Directory containing cleaned questions.
+
+    Returns
+    ----------
+    str: The generated answer or an error message.
+    """
+    message = "Error, couldn't process ⚠ "
+    # Calculate the highest TF-IDF score and associated word in the question
+    highest_tf_idf_question_word = highest_tf_idf_score(cleaned_question_directory, matrix_B)
+
+    # Find the most relevant document based on matrices A and B
+    most_relevant_document = calculating_most_relevant_document(matrix_A, matrix_B, directory)
+
+    filepath = os.path.join(directory, most_relevant_document)
+    # Check if the TF-IDF score is 0, indicating an error in processing the question
+    if highest_tf_idf_question_word[1] == 0:
+        message = "\033[91mAn error appeared while processing the question, we weren't able to generate a logical answer, the subject of your question is too general, please ask another question ⚠ \033[0m"
+    else:
+        # Try to open the most relevant document and read its content
+        with open(filepath, "r", encoding="utf-8") as opened_most_relevant_document:
+            text = opened_most_relevant_document.read()
+            sentences = text.split(".")
+
+
+            # Check if the highest TF-IDF word is present in the sentence
+            word_found=False
+            for sentence in sentences:
+                # Lower the sentence without using .lower()
+                answer=""
+                for word in sentence.split(" "):
+                  answer += word.lower()+" "
+
+                # Refine the answer
+                if highest_tf_idf_question_word[0] in answer and word_found==False:
+                    word_found = True
+                    message = (sentence)+"."
+
+            if word_found==False:
+                message=  "\033[91mAn error appeared while processing the question, we weren't able to generate a logical answer, the subject of your question is too general, please ask another question ⚠ \033[0m"
+    return message
