@@ -1139,7 +1139,7 @@ def calculating_most_relevant_document(matrix_A, matrix_B, directory):
     return message
 
 
-def generate_an_answer(matrix_A, matrix_B, directory, cleaned_question_directory):
+def generate_an_answer(matrix_A, matrix_B, directory, cleaned_question_directory, cleaned_directory):
     """
     Generates an answer based on TF-IDF similarity between the question and documents.
 
@@ -1149,6 +1149,7 @@ def generate_an_answer(matrix_A, matrix_B, directory, cleaned_question_directory
     matrix_B (list): TF-IDF matrix of the question.
     directory (str): Directory containing text documents.
     cleaned_question_directory (str): Directory containing cleaned questions.
+    cleaned_directory (str): The directory containing cleaned text files
 
     Returns
     ----------
@@ -1162,7 +1163,7 @@ def generate_an_answer(matrix_A, matrix_B, directory, cleaned_question_directory
     most_relevant_document = calculating_most_relevant_document(matrix_A, matrix_B, directory)
 
     filepath = os.path.join(directory, most_relevant_document)
-    cleaned_filepath = os.path.join("cleaned", most_relevant_document[:-4]+"_removed_punctuation.txt")
+    cleaned_filepath = os.path.join(cleaned_directory, most_relevant_document[:-4]+"_removed_punctuation.txt")
     # Check if the TF-IDF score is 0, indicating an error in processing the question
     if highest_tf_idf_question_word[1] == 0:
         message = "\033[91mAn error appeared while processing the question, we weren't able to generate a logical answer, the subject of your question is too general, please ask another question ⚠ \033[0m"
