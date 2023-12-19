@@ -490,7 +490,7 @@ def print_tf_idf_matrix(cleaned_directory_idf, cleaned_directory_tf, matrix):
         print(" │ ".join(header) + " │")
 
         # Print the matrix rows
-        for row in matrix:
+        for row in matrix[:20]:
             word = row[0]
             values = row[1]
             word_padding = ' ' * (max_word_length - len(word))  # Calculate padding for the word
@@ -1162,30 +1162,34 @@ def generate_an_answer(matrix_A, matrix_B, directory, cleaned_question_directory
     most_relevant_document = calculating_most_relevant_document(matrix_A, matrix_B, directory)
 
     filepath = os.path.join(directory, most_relevant_document)
+    cleaned_filepath = os.path.join("cleaned", most_relevant_document[:-4]+"_removed_punctuation.txt")
     # Check if the TF-IDF score is 0, indicating an error in processing the question
     if highest_tf_idf_question_word[1] == 0:
         message = "\033[91mAn error appeared while processing the question, we weren't able to generate a logical answer, the subject of your question is too general, please ask another question ⚠ \033[0m"
     else:
         # Try to open the most relevant document and read its content
-        with open(filepath, "r", encoding="utf-8") as opened_most_relevant_document:
+        with open(filepath, "r", encoding="utf-8") as opened_most_relevant_document, open(cleaned_filepath, "r", encoding="utf-8") as cleaned:
             text = opened_most_relevant_document.read()
-            sentences = text.split(".")
+            text_cleaned = cleaned.read()
+            sentences = text.split("\n")
+            sentences_cleaned = text_cleaned.split("\n")
 
 
             # Check if the highest TF-IDF word is present in the sentence
             word_found=False
-            for sentence in sentences:
-                # Lower the sentence without using .lower()
-                answer=""
-                for word in sentence.split(" "):
-                  answer += word.lower()+" "
+            answer=""
 
-                # Refine the answer
-                if highest_tf_idf_question_word[0] in answer and word_found==False:
-                    word_found = True
-                    message = (sentence)+"."
+            for i in range (len(sentences_cleaned)):
+              if highest_tf_idf_question_word[0] in sentences_cleaned[i] and word_found==False:
+                word_found = True
+                line= i
+
+            if word_found==True:
+                # Set the answer
+                message=sentences[line]
 
             if word_found==False:
+                # Error answer
                 message=  "\033[91mAn error appeared while processing the question, we weren't able to generate a logical answer, the subject of your question is too general, please ask another question ⚠ \033[0m"
     return message
 
