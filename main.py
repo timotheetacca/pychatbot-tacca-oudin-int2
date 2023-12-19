@@ -148,7 +148,7 @@ if user_mode == "":
         matrix_question = tf_idf_matrix(cleaned_directory, cleaned_question_directory)
 
         # Generate an answer using the TF-IDF matrix
-        answer = generate_an_answer(matrix, matrix_question, directory, cleaned_question_directory)
+        answer = generate_an_answer(matrix, matrix_question, directory, cleaned_question_directory, cleaned_directory)
 
         # Display the chatbot's response
         print(f"\n\033[94mChatbot:\033[0m", refine_an_answer(cleaned_question_directory, answer), "\n")
