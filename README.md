@@ -13,11 +13,10 @@ Once the “main.py” is launched, you have two choices, on one hand a “chat-
 
 ## Requirements
 
-This project is fully made in python !
 
 ![python](https://img.shields.io/badge/Python-FFD43B?style=for-the-badge&logo=python&logoColor=blue)
 
-We advise you to use the latest version of python, as no module installation is required for the proigram to work properly. 
+We advise you to use the latest version of python, as no module installation is required for the program to work properly. 
 
 ## Download.
 
